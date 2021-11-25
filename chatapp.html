@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>chatApp</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+
+  </style>
+</head>
+
+<body>
+  <h1>realtime chat</h1>
+  <!-- 入力場所を作成しよう -->
+  <form>
+    <fieldset class="gamen">
+      <legend>チャット入力画面</legend>
+      <div>
+        name: <input type="text" id="name">
+      </div>
+      <div>
+        text: <input type="text" id="text">
+      </div>
+      <div>
+        <button type="button" id="send">send</button>
+      </div>
+    </fieldset>
+
+    <fieldset class="gamen">
+      <legend>チャット削除画面</legend>
+      <div>
+        id: <input type="text" id="dlid">
+      </div>
+      <div>
+        <button type="button" id="delete">delete</button>
+      </div>
+    </fieldset>
+
+    <fieldset class="gamen">
+      <legend>チャット更新画面</legend>
+      <div>
+        id: <input type="text" id="addid">
+      </div>
+      <div>
+        name: <input type="text" id="nameadd">
+      </div>
+      <div>
+        text: <input type="text" id="textadd">
+      </div>
+      <div>
+        <button type="button" id="add">add</button>
+      </div>
+    </fieldset>
+  </form>
+
+  <!-- データ出力場所 -->
+  <ul id="output"></ul>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script>
+    // 日時をいい感じの形式にする関数
+    function convertTimestampToDatetime(timestamp) {
+      const _d = timestamp ? new Date(timestamp * 1000) : new Date();
+      const Y = _d.getFullYear();
+      const m = (_d.getMonth() + 1).toString().padStart(2, '0');
+      const d = _d.getDate().toString().padStart(2, '0');
+      const H = _d.getHours().toString().padStart(2, '0');
+      const i = _d.getMinutes().toString().padStart(2, '0');
+      const s = _d.getSeconds().toString().padStart(2, '0');
+      return `${Y}/${m}/${d} ${H}:${i}:${s}`;
+    }
+  </script>
+  <!-- 以下にfirebaseのコードを貼り付けよう -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.5.0/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      serverTimestamp,
+      onSnapshot,
+      query,
+      orderBy,
+      doc,
+      deleteDoc,
+      setDoc,
+      //getAuth,
+      //signInAnonymously,
+    } from "https://www.gstatic.com/firebasejs/9.5.0/firebase-firestore.js";
+    const firebaseConfig = {
+
+      authDomain: "chat-50e90.firebaseapp.com",
+      projectId: "chat-50e90",
+      storageBucket: "chat-50e90.appspot.com",
+      messagingSenderId: "118902560314",
+      appId: "1:118902560314:web:e1cbe7c8c2acdd00e48703"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    $("#send").on("click", function () {
+      const data = {
+        name: $("#name").val(),
+        text: $("#text").val(),
+        time: serverTimestamp()
+      };
+      addDoc(collection(db, "chat"), data);
+      $("#text").val("");
+    })
+
+    const q = query(collection(db, "chat"), orderBy("time", "desc"));
+    onSnapshot(q, (querySnapshot) => {
+      //console.log(querySnapshot.docs);
+      const dataArray = [];
+      querySnapshot.docs.forEach(function (doc) {
+        const data = {
+          id: doc.id,
+          data: doc.data(),
+        };
+        dataArray.push(data);
+      });
+      console.log(dataArray);
+
+      const tagArray = [];
+      dataArray.forEach(function (data) {
+        tagArray.push(`
+      <li id="${data.id}">
+        <p>${data.id}</p>
+        <p>${data.data.name} at ${convertTimestampToDatetime(data.data.time)}</p>
+        <p>${data.data.text}</p>
+      </li>
+      `);
+      });
+
+      $("#output").html(tagArray);
+
+    });
+
+    //削除
+    $("#delete").on("click", function () {
+      //const dldata = $("#dlid").val()
+      //console.log(dldata);
+      deleteDoc(doc(db, "chat", $("#dlid").val()));
+
+      //$("#dlid").val("");
+    })
+
+    //更新
+    $("#add").on("click", function () {
+      setDoc(doc(db, "chat", $("#addid").val()), {
+        name: $("#nameadd").val(),
+        text: $("#textadd").val(),
+        time: serverTimestamp()
+      });
+    })
+
+    //匿名ログイン
+   // const auth = getAuth();
+   // onAuthStateChanged(auth, (user) => {
+     // if (user) {
+        // User is signed in, see docs for a list of available properties
+        // https://firebase.google.com/docs/reference/js/firebase.User
+       // const uid = user.uid;
+        // ...
+      //} else {
+        // User is signed out
+        //
+     // }
+    //});
+
+  </script>
+
+</body>
+
+</html>

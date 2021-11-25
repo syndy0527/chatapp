@@ -1,0 +1,12 @@
+h1{
+    text-align: center;
+}
+#output li{
+  background: #ccc;
+}
+form{
+    display: flex;
+    justify-content: center;
+    margin: auto;
+}
+
